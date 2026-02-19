@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Simple Calculator</title>
+  <style>
+    :root{
+      --bg1:#0b1220;
+      --bg2:#0f1b33;
+      --card:#0f1a30cc;
+      --card2:#0a1326cc;
+      --text:#eaf0ff;
+      --muted:#9fb0d6;
+      --accent:#6ea8ff;
+      --accent2:#9b7bff;
+      --danger:#ff6b8a;
+
+      --btn:#132348;
+      --btn2:#0f1c3b;
+      --border:#22355f;
+      --shadow: 0 20px 50px rgba(0,0,0,.45);
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 600px at 20% 10%, rgba(110,168,255,.22), transparent 60%),
+        radial-gradient(900px 500px at 80% 30%, rgba(155,123,255,.18), transparent 55%),
+        linear-gradient(160deg, var(--bg1), var(--bg2));
+      display:grid;
+      place-items:center;
+      padding:24px;
+    }
+
+    .app{
+      width:min(420px, 100%);
+      border:1px solid rgba(255,255,255,.06);
+      background: linear-gradient(180deg, var(--card), var(--card2));
+      backdrop-filter: blur(10px);
+      border-radius:20px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .top{
+      padding:18px 18px 14px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .brand{
+      display:flex; flex-direction:column; gap:4px;
+    }
+    .brand .title{
+      font-weight:700; letter-spacing:.2px;
+    }
+    .brand .sub{
+      font-size:12px; color:var(--muted);
+    }
+
+    .pill{
+      font-size:12px;
+      color:var(--muted);
+      border:1px solid rgba(255,255,255,.10);
+      padding:8px 10px;
+      border-radius:999px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      user-select:none;
+    }
+    .dot{
+      width:8px; height:8px;
+      border-radius:50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 0 18px rgba(110,168,255,.55);
+    }
+
+    .display{
+      padding:18px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .expr{
+      min-height:22px;
+      font-size:14px;
+      color:var(--muted);
+      text-align:right;
+      letter-spacing:.2px;
+      word-break: break-all;
+    }
+    .result{
+      min-height:46px;
+      font-size:36px;
+      font-weight:750;
+      text-align:right;
+      letter-spacing:.5px;
+      word-break: break-all;
+    }
+
+    .keys{
+      padding:18px;
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:10px;
+    }
+
+    button{
+      border:1px solid rgba(255,255,255,.08);
+      background: linear-gradient(180deg, rgba(19,35,72,.95), rgba(15,28,59,.95));
+      color:var(--text);
+      padding:14px 12px;
+      border-radius:14px;
+      font-size:16px;
+      font-weight:650;
+      cursor:pointer;
+      box-shadow: 0 10px 18px rgba(0,0,0,.25);
+      transition: transform .06s ease, filter .15s ease, border-color .15s ease;
+      user-select:none;
+    }
+    button:hover{
+      filter: brightness(1.08);
+      border-color: rgba(110,168,255,.35);
+    }
+    button:active{
+      transform: translateY(1px) scale(.99);
+      filter: brightness(1.02);
+    }
+
+    .op{
+      color:#e9eeff;
+      border-color: rgba(110,168,255,.25);
+    }
+    .op[data-key="="]{
+      background: linear-gradient(135deg, rgba(110,168,255,.95), rgba(155,123,255,.95));
+      border-color: rgba(255,255,255,.18);
+      box-shadow: 0 12px 22px rgba(110,168,255,.18);
+    }
+    .danger{
+      color:#ffe9ee;
+      border-color: rgba(255,107,138,.25);
+    }
+    .danger:hover{ border-color: rgba(255,107,138,.45); }
+
+    .wide{ grid-column: span 2; }
+
+    .footer{
+      padding: 0 18px 18px;
+      color: var(--muted);
+      font-size: 12px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+    }
+    kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size:11px;
+      padding:2px 6px;
+      border-radius:6px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app" aria-label="Calculator">
+    <header class="top">
+      <div class="brand">
+        <div class="title">Calculator</div>
+        <div class="sub">Simple • clean • keyboard friendly</div>
+      </div>
+      <div class="pill" title="Status">
+        <span class="dot" aria-hidden="true"></span>
+        Ready
+      </div>
+    </header>
+
+    <section class="display" aria-label="Display">
+      <div class="expr" id="expr" aria-live="polite"></div>
+      <div class="result" id="result" aria-live="polite">0</div>
+    </section>
+
+    <section class="keys" aria-label="Keys">
+      <button class="danger" data-key="AC" aria-label="All clear">AC</button>
+      <button class="danger" data-key="DEL" aria-label="Delete">DEL</button>
+      <button class="op" data-key="%" aria-label="Percent">%</button>
+      <button class="op" data-key="/" aria-label="Divide">÷</button>
+
+      <button data-key="7">7</button>
+      <button data-key="8">8</button>
+      <button data-key="9">9</button>
+      <button class="op" data-key="*" aria-label="Multiply">×</button>
+
+      <button data-key="4">4</button>
+      <button data-key="5">5</button>
+      <button data-key="6">6</button>
+      <button class="op" data-key="-" aria-label="Minus">−</button>
+
+      <button data-key="1">1</button>
+      <button data-key="2">2</button>
+      <button data-key="3">3</button>
+      <button class="op" data-key="+" aria-label="Plus">+</button>
+
+      <button class="wide" data-key="0">0</button>
+      <button data-key=".">.</button>
+      <button class="op" data-key="=" aria-label="Equals">=</button>
+    </section>
+
+    <div class="footer">
+      <div>Tips: <kbd>Enter</kbd> = equals, <kbd>Backspace</kbd> = delete</div>
+      <div><kbd>Esc</kbd> = clear</div>
+    </div>
+  </main>
+
+  <script>
+    const exprEl = document.getElementById("expr");
+    const resultEl = document.getElementById("result");
+
+    let expr = "";
+    let justEvaluated = false;
+
+    const pretty = (s) =>
+      s.replaceAll("*", "×").replaceAll("/", "÷").replaceAll("-", "−");
+
+    function setDisplay() {
+      exprEl.textContent = pretty(expr);
+      resultEl.textContent = expr.trim() ? formatNumber(safePreview(expr)) : "0";
+    }
+
+    function formatNumber(n) {
+      if (n === "Error") return "Error";
+      if (!isFinite(n)) return "Error";
+      // keep it readable without going wild
+      const abs = Math.abs(n);
+      if (abs !== 0 && (abs >= 1e12 || abs < 1e-9)) return n.toExponential(8).replace(/\.?0+e/, "e");
+      const s = n.toString();
+      if (s.length <= 14) return s;
+      return n.toPrecision(12).replace(/\.?0+$/, "");
+    }
+
+    function safePreview(s) {
+      // Preview result while typing; return number or "Error"
+      try {
+        const cleaned = sanitize(s);
+        if (!cleaned) return 0;
+        // Don't evaluate if ends with operator
+        if (/[+\-*/.%]\s*$/.test(cleaned)) return evalNoPercent(cleaned.slice(0, -1));
+        return evalNoPercent(cleaned);
+      } catch {
+        return "Error";
+      }
+    }
+
+    function sanitize(s) {
+      // Allow digits, operators, dot, spaces, percent
+      if (!/^[0-9+\-*/.%\s]*$/.test(s)) throw new Error("Bad input");
+      // Prevent repeated dots in a number segment
+      const parts = s.split(/[\+\-\*\/% ]+/).filter(Boolean);
+      for (const p of parts) {
+        const dots = (p.match(/\./g) || []).length;
+        if (dots > 1) throw new Error("Too many dots");
+      }
+      return s.trim();
+    }
+
+    function evalNoPercent(s) {
+      // Convert percent: "50%" => "0.5"
+      // Handles patterns like "200 + 10%" => 200 + 0.1 (simple interpretation)
+      const replaced = s.replace(/(\d+(\.\d+)?)%/g, (_, num) => `(${num}/100)`);
+      // Safe-ish: we only allow the characters above, then eval.
+      // For a learning project this is fine; for production you'd parse yourself.
+      // eslint-disable-next-line no-eval
+      const val = eval(replaced);
+      return Number(val);
+    }
+
+    function push(token) {
+      if (token === "AC") {
+        expr = "";
+        justEvaluated = false;
+        setDisplay();
+        return;
+      }
+      if (token === "DEL") {
+        expr = expr.slice(0, -1);
+        justEvaluated = false;
+        setDisplay();
+        return;
+      }
+      if (token === "=") {
+        try {
+          const cleaned = sanitize(expr);
+          const val = evalNoPercent(cleaned || "0");
+          exprEl.textContent = pretty(expr) || "0";
+          resultEl.textContent = formatNumber(val);
+          expr = String(val);
+          justEvaluated = true;
+        } catch {
+          resultEl.textContent = "Error";
+          justEvaluated = true;
+        }
+        return;
+      }
+
+      const isOp = /[+\-*/]/.test(token);
+      const isNumOrDot = /[0-9.]/.test(token);
+
+      if (justEvaluated) {
+        // If they just pressed "=", and now type a number, start fresh.
+        // If they type an operator, continue with the result.
+        if (isNumOrDot) expr = "";
+        justEvaluated = false;
+      }
+
+      // Avoid starting with invalid operators (except minus)
+      if (!expr && isOp && token !== "-") return;
+
+      // Avoid double operators like "5++" (allow "-"" after operator for negatives)
+      if (isOp) {
+        if (/[+\-*/]\s*$/.test(expr)) {
+          // replace last operator unless user is typing a negative sign
+          if (!(token === "-" && /[+\-*/]\s*$/.test(expr) && !expr.endsWith("-"))) {
+            expr = expr.replace(/[+\-*/]\s*$/, token);
+            setDisplay();
+            return;
+          }
+        }
+      }
+
+      // Basic dot rule: don't allow ".." or dot in same number
+      if (token === ".") {
+        // find last number chunk
+        const lastChunk = expr.split(/[+\-*/% ]/).pop() || "";
+        if (lastChunk.includes(".")) return;
+        if (lastChunk === "") expr += "0";
+      }
+
+      expr += token;
+      setDisplay();
+    }
+
+    // Button clicks
+    document.querySelectorAll("button[data-key]").forEach((btn) => {
+      btn.addEventListener("click", () => push(btn.dataset.key));
+    });
+
+    // Keyboard support
+    window.addEventListener("keydown", (e) => {
+      const k = e.key;
+
+      if (k === "Enter" || k === "=") { e.preventDefault(); push("="); return; }
+      if (k === "Backspace") { e.preventDefault(); push("DEL"); return; }
+      if (k === "Escape") { e.preventDefault(); push("AC"); return; }
+
+      if ("0123456789".includes(k)) { push(k); return; }
+      if (k === ".") { push("."); return; }
+      if (["+","-","*","/","%"].includes(k)) { push(k); return; }
+    });
+
+    setDisplay();
+  </script>
+</body>
+</html>
